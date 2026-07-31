@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment — KHÔNG commit .env (chứa JWT_SECRET, DATABASE_URL)
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
