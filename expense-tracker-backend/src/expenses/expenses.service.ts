@@ -76,7 +76,9 @@ export class ExpensesService {
   async update(userId: number, id: number, dto: UpdateExpenseDto) {
     const expense = await this.findOne(userId, id); // check ownership trước
     Object.assign(expense, dto);
-    return this.expensesRepository.save(expense);
+    await this.expensesRepository.save(expense);
+    // Reload từ DB để amount luôn trả về đúng định dạng decimal (string)
+    return this.expensesRepository.findOneBy({ id });
   }
 
   async remove(userId: number, id: number) {
