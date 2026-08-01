@@ -52,6 +52,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Health check công khai (UptimeRobot ping giữ service thức)
                 .requestMatchers(HttpMethod.GET, "/health").permitAll()
+                // HEAD cũng công khai — một số uptime tool dùng HEAD probe thay vì GET
+                .requestMatchers(HttpMethod.HEAD, "/health").permitAll()
                 // Auth công khai (đăng ký / đăng nhập)
                 .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
                 // Mọi request khác cần JWT hợp lệ (đã verify ở filter)
