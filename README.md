@@ -120,7 +120,7 @@ Mở `http://localhost:5173` → Đăng ký tài khoản → Bắt đầu sử d
 Xem chi tiết: **[HUONG_DAN_DEPLOY.md](HUONG_DAN_DEPLOY.md)**
 
 Tóm tắt:
-- **Backend** → Render (Web Service): Runtime = **Docker** (Render không native-support Java), build từ `Dockerfile` (multi-stage: Maven build → JRE 21), env `DATABASE_URL` (Neon) + `DB_USERNAME` + `DB_PASSWORD` + `JWT_SECRET` + `CORS_ORIGIN` + `PORT=8080`
+- **Backend** → Render (Web Service): Runtime = **Docker** (Render không native-support Java), build từ `Dockerfile` (multi-stage: Maven build → JRE 21), env `DATABASE_URL` (Neon, dán thẳng `postgresql://...`) + `JWT_SECRET` + `CORS_ORIGIN` + `PORT=8080`
 - **Database** → Neon (PostgreSQL 16 free)
 - **Frontend** → Vercel (Framework: Vite), env `VITE_API_URL=https://<api>.onrender.com/api`
 

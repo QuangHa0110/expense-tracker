@@ -76,15 +76,14 @@ git push -u origin main
 4. **Environment Variables** (Environment tab):
 
    ```
-   DATABASE_URL = <connection string Neon ở bước 2>
-   DB_USERNAME  = <user Neon, vd: neondb_owner>
-   DB_PASSWORD  = <password Neon>
+   DATABASE_URL = <connection string Neon ở bước 2 — dán thẳng, vd: postgresql://neondb_owner:xxx@ep-xxx.aws.neon.tech/neondb?sslmode=require>
    JWT_SECRET   = <chuỗi dài ngẫu nhiên, vd: xK9!pQ2#mZ7@vR4$tW8^yB5&nC3*eF6>
    CORS_ORIGIN  = http://localhost:5173  (tạm; đổi thành domain Vercel ở bước 5)
    PORT         = 8080
    ```
 
-   > 💡 Nếu dùng Render Postgres (trả phí) thay Neon, có thể bỏ `DB_USERNAME`/`DB_PASSWORD` — nhưng Neon free là đủ.
+   > 💡 **Không cần** `DB_USERNAME`/`DB_PASSWORD` — `DataSourceConfig` tự parse user/pass từ `DATABASE_URL` (chuỗi Neon đã chứa sẵn). Nếu bạn muốn set riêng vẫn được (sẽ ưu tiên env).
+   > 💡 `DATABASE_URL` chấp nhận cả 2 dạng: `postgresql://...` (Neon copy-paste thẳng) hoặc `jdbc:postgresql://...` — code tự xử lý.
 
 5. Deploy → chờ ~5-8 phút (build Docker lâu hơn native) → copy URL (vd: `https://expense-tracker-api.onrender.com`)
 6. **Kiểm tra:** mở `https://expense-tracker-api.onrender.com/api/auth/login` (sẽ trả 400/405 — nghĩa là API sống)
@@ -148,14 +147,14 @@ Mở `https://expense-tracker.vercel.app` và test ĐỦ các luồng:
 | Triệu chứng | Nguyên nhân | Cách sửa |
 |-------------|-------------|----------|
 | FE báo CORS error | CORS_ORIGIN chưa đúng | Sửa CORS_ORIGIN trên Render = đúng domain Vercel |
-| Login trả 500 | DATABASE_URL sai / thiếu DB_USERNAME, DB_PASSWORD | Kiểm tra lại connection string Neon (có `?sslmode=require`) |
+| Login trả 500 | DATABASE_URL sai / không kết nối được Neon | Kiểm tra lại connection string Neon (có `?sslmode=require`); không cần set DB_USERNAME/DB_PASSWORD riêng |
 | FE tải nhưng trắng | VITE_API_URL thiếu `/api` | Sửa env trên Vercel → Redeploy |
 | Render build lỗi | Root Directory sai | Chỉ rõ `expense-tracker-backend` |
 | Render build lỗi Maven | Java version sai | Đảm bảo Dockerfile dùng JDK 21 (pom yêu cầu) — Dockerfile đã set `maven:3.9.9-eclipse-temurin-21` |
 | Render không có Runtime Java | Chọn nhầm native runtime | Chọn Runtime = **Docker** (Render chỉ native-support Node/Python/Ruby/Go/Rust/Elixir) |
 | 404 khi vào /register | — | Vercel tự xử lý SPA fallback cho Vite; nếu lỗi thêm `vercel.json` với `{"rewrites": [{"source": "/(.*)", "destination": "/index.html"}]}` |
 | DB bị xóa khi restart | Dùng SQLite thay vì Postgres | Chuyển sang Neon (persistent) |
-| Backend chạy nhưng trỏ nhầm DB cũ | Thiếu env DATABASE_URL khi chạy jar | Set đủ `DATABASE_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `CORS_ORIGIN` |
+| Backend chạy nhưng trỏ nhầm DB cũ | Thiếu env DATABASE_URL khi chạy jar | Set đủ `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN` (DB_USERNAME/DB_PASSWORD không bắt buộc — tự parse từ URL) |
 
 ---
 
