@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* ===== Theme Light Gradient — Expense Tracker ===== */
+/* Nền pastel tổng thể + font Be Vietnam Pro */
+
+:root {
+  --grad-page: linear-gradient(160deg, #eef2ff 0%, #fdf4ff 45%, #fce7f3 100%);
+}
+
+body {
+  font-family: "Be Vietnam Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--grad-page);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
 /* Toast trượt vào từ phải */
 @keyframes slide-in {
   from {
@@ -13,4 +27,67 @@
 }
 .animate-slide-in {
   animation: slide-in 0.25s ease-out;
+}
+
+/* Phần tử xuất hiện từ dưới lên (thẻ số liệu, hero...) */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.45s ease-out both;
+}
+
+/* Hiệu ứng nổi lên - xuống nhẹ cho blob nền / icon trang trí */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+.animate-float-slow {
+  animation: float 11s ease-in-out infinite;
+}
+
+/* Modal: bung nhẹ từ giữa */
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-pop {
+  animation: pop 0.22s ease-out both;
+}
+
+/* Số đếm nhảy nhẹ khi giá trị đổi */
+@keyframes number-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-number-bump {
+  animation: number-bump 0.4s ease-out;
 }

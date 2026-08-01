@@ -54,17 +54,32 @@ export function RegisterPage() {
   }
 
   const inputClass = (hasError: boolean) =>
-    `w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+    `w-full border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 transition ${
       hasError
-        ? 'border-red-400 focus:ring-red-200'
-        : 'border-gray-300 focus:ring-blue-200'
+        ? 'border-red-300 bg-red-50/50 focus:ring-red-200'
+        : 'border-slate-200 bg-white/70 focus:border-indigo-400 focus:ring-indigo-200'
     }`;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">Đăng ký</h1>
-        <p className="text-sm text-gray-500 mb-6">Tạo tài khoản miễn phí</p>
+    <div className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">
+      {/* Blob nền — nổi lơ lửng tạo chiều sâu */}
+      <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-indigo-300/40 blur-3xl animate-float-slow" />
+      <div className="absolute -bottom-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-pink-300/40 blur-3xl animate-float" />
+      <div className="absolute top-1/4 left-1/3 w-40 h-40 rounded-full bg-amber-200/40 blur-2xl animate-float-slow" />
+
+      <div className="relative w-full max-w-md bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl shadow-xl shadow-indigo-200/40 p-8 animate-fade-in-up">
+        {/* Logo + tiêu đề */}
+        <div className="flex items-center gap-3 mb-6">
+          <span className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-2xl shadow-lg shadow-indigo-300/50">
+            💰
+          </span>
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 leading-tight">
+              Tạo tài khoản
+            </h1>
+            <p className="text-xs text-slate-500">Miễn phí — bắt đầu quản lý thu chi</p>
+          </div>
+        </div>
 
         {serverError && (
           <div className="mb-4">
@@ -74,7 +89,7 @@ export function RegisterPage() {
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Họ tên
             </label>
             <input
@@ -90,7 +105,7 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Email
             </label>
             <input
@@ -106,7 +121,7 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Mật khẩu
             </label>
             <input
@@ -122,7 +137,7 @@ export function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Xác nhận mật khẩu
             </label>
             <input
@@ -140,15 +155,15 @@ export function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition"
+            className="w-full bg-gradient-to-r from-indigo-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl transition shadow-lg shadow-indigo-300/40"
           >
             {loading ? 'Đang xử lý...' : 'Đăng ký'}
           </button>
         </form>
 
-        <p className="text-sm text-gray-600 mt-5 text-center">
+        <p className="text-sm text-slate-600 mt-5 text-center">
           Đã có tài khoản?{' '}
-          <Link to="/login" className="text-blue-600 font-medium hover:underline">
+          <Link to="/login" className="text-indigo-600 font-medium hover:underline">
             Đăng nhập
           </Link>
         </p>

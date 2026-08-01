@@ -8,12 +8,12 @@ interface AlertProps {
 // Component hiển thị thông báo — dùng chung cho mọi lỗi (xử lý lỗi tập trung ở UI)
 export function Alert({ type, children }: AlertProps) {
   const styles = {
-    error: 'bg-red-50 border-red-200 text-red-700',
-    success: 'bg-green-50 border-green-200 text-green-700',
-    info: 'bg-blue-50 border-blue-200 text-blue-700',
+    error: 'bg-rose-50 border-rose-200 text-rose-700',
+    success: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+    info: 'bg-indigo-50 border-indigo-200 text-indigo-700',
   };
   return (
-    <div className={`border rounded-lg px-4 py-3 text-sm ${styles[type]}`}>
+    <div className={`border rounded-xl px-4 py-3 text-sm ${styles[type]}`}>
       {children}
     </div>
   );
