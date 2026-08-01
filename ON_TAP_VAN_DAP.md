@@ -28,11 +28,11 @@ Luồng hoạt động:
 
 **Trả lời:**
 Có 3 lớp bảo vệ:
-1. **userId không bao giờ lấy từ client** — luôn lấy từ token đã verify (payload.sub). Client gửi userId=5 trong body cũng bị bỏ qua vì ValidationPipe `whitelist: true` loại bỏ field không khai báo trong DTO.
+1. **userId không bao giờ lấy từ client** — luôn lấy từ token đã verify (`AuthUser` = { id, email, name } lấy từ JWT). Client gửi userId=5 trong body cũng bị bỏ qua vì DTO không khai báo field userId (Jackson bỏ qua field lạ, hoặc trả 400 nếu bật fail-on-unknown).
 2. **Mọi query đều có WHERE userId**: 
-   - List: `findAndCount({ where: { userId } })` — user chỉ thấy dữ liệu của mình
-   - Detail/Update/Delete: `findOne({ where: { id, userId } })` — phải khớp CẢ id LẪN userId
-3. **Trả 404 thay vì 403**: nếu không tìm thấy bản ghi thuộc về user → `NotFoundException` (404). Lý do: không tiết lộ cho kẻ tấn công biết rằng expense đó tồn tại.
+   - List: repository method `findByUserId` — user chỉ thấy dữ liệu của mình
+   - Detail/Update/Delete: `findByUserIdAndId(userId, id)` — phải khớp CẢ userId LẪN id
+3. **Trả 404 thay vì 403**: nếu không tìm thấy bản ghi thuộc về user → `ExpenseNotFoundException` (404). Lý do: không tiết lộ cho kẻ tấn công biết rằng expense đó tồn tại.
 
 **Demo nói:** "Thầy có thể đăng nhập user B, gọi DELETE /api/expenses/1 (expense của user A) — sẽ nhận 404."
 
@@ -54,8 +54,8 @@ Có 3 lớp bảo vệ:
 
 **Trả lời:**
 Bị bỏ qua vì 2 lý do:
-1. DTO `CreateExpenseDto` **không khai báo** field userId → ValidationPipe với `whitelist: true, forbidNonWhitelisted: true` loại bỏ (hoặc trả 400 nếu cố tình gửi)
-2. Backend tự gán `userId` từ `req.user.id` (lấy từ token): `expensesService.create(req.user.id, dto)` — dữ liệu client không bao giờ quyết định chủ sở hữu
+1. DTO `CreateExpenseDto` **không khai báo** field userId → Jackson bỏ qua field lạ khi deserialize (mặc định), backend không bao giờ đọc nó
+2. Backend tự gán `userId` từ `AuthUser` (lấy từ token): `expenseService.create(authUser.id(), dto)` — dữ liệu client không bao giờ quyết định chủ sở hữu
 
 **Nguyên tắc:** không bao giờ tin dữ liệu client về phân quyền. Chỉ tin token đã verify.
 
@@ -65,7 +65,7 @@ Bị bỏ qua vì 2 lý do:
 
 **Trả lời:**
 - **Frontend (React):** validate để UX tốt — báo lỗi ngay khi nhập/sumbit, không cần chờ server. VD: required, email format, số tiền > 0. Có thể bị vô hiệu hóa (tắt JS, sửa DevTools) nên không an toàn.
-- **Backend (NestJS + class-validator):** validate để BẢO MẬT và toàn vẹn dữ liệu — bắt buộc, không thể bypass. Decorator trên DTO: `@IsEmail()`, `@MinLength(6)`, `@IsIn(EXPENSE_CATEGORIES)`, `@Min(1)`... Sai → ValidationPipe tự trả **400 Bad Request** kèm message.
+- **Backend (Spring Boot + Bean Validation):** validate để BẢO MẬT và toàn vẹn dữ liệu — bắt buộc, không thể bypass. Annotation trên DTO: `@Email`, `@Size(min=6)`, `@Pattern` (category hợp lệ), `@DecimalMin("0.01")`... Sai → Spring trả **400 Bad Request** kèm message qua `MethodArgumentNotValidException` → `GlobalExceptionHandler`.
 
 **Kết luận:** FE validate cho người dùng, BE validate cho hệ thống. Cần cả 2.
 
@@ -88,7 +88,7 @@ CORS (Cross-Origin Resource Sharing) là cơ chế của trình duyệt: một t
 
 VD: FE chạy ở `http://localhost:5173`, BE ở `http://localhost:3000` — 2 origin khác nhau (khác port). Trình duyệt chặn request nếu BE không gửi header `Access-Control-Allow-Origin`.
 
-**Giải pháp trong project:** `app.enableCors({ origin: process.env.CORS_ORIGIN })` — BE khai báo rõ domain FE được phép. Khi deploy: CORS_ORIGIN = domain Vercel.
+**Giải pháp trong project:** `SecurityConfig` đọc `CORS_ORIGIN` (env) → `CorsConfigurationSource` khai báo rõ domain FE được phép. Khi deploy: CORS_ORIGIN = domain Vercel.
 
 **Bị hỏi thêm:** "CORS có phải là tường lửa không?" → Không. CORS chỉ là quy tắc của trình duyệt; gọi bằng curl/Postman không bị chặn.
 
@@ -99,7 +99,7 @@ VD: FE chạy ở `http://localhost:5173`, BE ở `http://localhost:3000` — 2 
 **Trả lời:**
 - File `.env` chứa cấu hình nhạy cảm: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `PORT`
 - **Không commit** `.env` lên GitHub — đã thêm vào `.gitignore`. Commit bản mẫu `.env.example` (không có giá trị thật) để người khác biết cần cấu hình gì
-- Backend dùng `@nestjs/config` (ConfigModule + ConfigService) đọc `.env`
+- Backend dùng Spring Boot đọc cấu hình từ biến môi trường qua `application.properties` (cú pháp `${ENV:default}`) — VD `spring.datasource.url=${DATABASE_URL:jdbc:postgresql://localhost:5432/expense_tracker}`
 - Khi deploy lên Render: dán biến môi trường vào dashboard của Render (Environment tab), không cần file .env trên server
 - JWT_SECRET phải là chuỗi dài ngẫu nhiên, khác nhau giữa dev và production
 
@@ -109,8 +109,8 @@ VD: FE chạy ở `http://localhost:5173`, BE ở `http://localhost:3000` — 2 
 
 **Trả lời:**
 **SQL Injection** (chèn mã SQL độc hại vào query):
-- TypeORM dùng **parameterized query** — giá trị được truyền qua tham số `{ userId }`, không nối chuỗi trực tiếp vào SQL
-- VD an toàn: `findOne({ where: { id, userId } })` → TypeORM tạo `WHERE id = $1 AND userId = $2` — giá trị không bao giờ được coi là mã SQL
+- Spring Data JPA dùng **parameterized query** — giá trị được truyền qua tham số, không nối chuỗi trực tiếp vào SQL
+- VD an toàn: `expenseRepository.findByUserIdAndId(userId, id)` → JPA tạo `WHERE user_id = ? AND id = ?` — giá trị không bao giờ được coi là mã SQL
 
 **XSS** (chèn script độc hại):
 - React **tự escape** mọi giá trị render trong JSX — `{exp.title}` hiển thị dạng text, không chạy như HTML
@@ -123,9 +123,9 @@ VD: FE chạy ở `http://localhost:5173`, BE ở `http://localhost:3000` — 2 
 **Trả lời (trình tự đúng):**
 
 **Backend (3 file):**
-1. `expense.entity.ts` → thêm `@Column({ length: 100, nullable: true }) location: string | null;`
-2. `create-expense.dto.ts` → thêm `@IsOptional() @IsString() @MaxLength(100) location?: string;`
-3. (UpdateExpenseDto tự kế thừa qua PartialType, không cần sửa)
+1. `Expense.java` → thêm `@Column(length = 100) private String location;` (nullable mặc định = true)
+2. `CreateExpenseDto.java` → thêm `@Size(max = 100) String location;` (nullable → optional)
+3. `ExpenseDto.java` → thêm field `location` để trả về client
 
 **Frontend (2 file):**
 4. `api/expenses.ts` → thêm `location?: string` vào interface Expense + ExpenseInput
@@ -139,10 +139,10 @@ VD: FE chạy ở `http://localhost:5173`, BE ở `http://localhost:3000` — 2 
 
 | Câu hỏi | Ý chính trả lời |
 |---------|-----------------|
-| Vì sao dùng NestJS mà không Express thuần? | NestJS có cấu trúc module + DI + decorator, tích hợp sẵn ValidationPipe, Guard, ExceptionFilter → code chuẩn, ít lỗi, dễ bảo trì |
+| Vì sao dùng Spring Boot mà không Express thuần? | Spring Boot có cấu trúc module + DI (IoC) + annotation, tích hợp sẵn Spring Security, Bean Validation, ExceptionHandler → code chuẩn, ít lỗi, dễ bảo trì |
 | Vì sao cột amount là string? | Postgres decimal trả về string để không mất số thập phân (JS number không chính xác với số lớn) |
-| Synchronize: true có an toàn không? | Chỉ dùng cho dev/demo. Production nên dùng migration (TypeORM CLI) |
-| Vì sao phân trang? | Tránh tải toàn bộ dữ liệu — `page`/`limit` + `findAndCount` |
+| Synchronize: true có an toàn không? | Chỉ dùng cho dev/demo. Production nên dùng migration (Flyway/Liquibase hoặc ddl-auto=validate) |
+| Vì sao phân trang? | Tránh tải toàn bộ dữ liệu — `page`/`limit` (Spring Data: Pageable) |
 | Dữ liệu xóa mềm hay cứng? | Cứng (`repository.remove`) — phù hợp quy mô đồ án. Nếu cần lịch sử thì thêm cột `deletedAt` (soft delete) |
 | Biểu đồ dữ liệu từ đâu? | Endpoint `/api/expenses/summary?year=` — GROUP BY tháng, SUM(amount). Chỉ tính cho user đang đăng nhập |
 

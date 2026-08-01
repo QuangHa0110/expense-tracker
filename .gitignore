@@ -1,0 +1,30 @@
+# ===== Dependencies =====
+node_modules/
+
+# ===== Build outputs =====
+dist/
+target/
+build/
+*.class
+*.jar
+!target/*.jar
+
+# ===== Environment — KHÔNG commit (chứa JWT_SECRET, DATABASE_URL) =====
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ===== Logs & coverage =====
+*.log
+npm-debug.log*
+coverage/
+
+# ===== Editor / OS =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ===== Tài liệu nội bộ — không nộp =====
+20252 - IT4409 - De thi cuoi ky.pdf

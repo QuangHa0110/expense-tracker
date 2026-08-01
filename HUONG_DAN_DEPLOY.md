@@ -1,21 +1,23 @@
-# 🌐 HƯỚNG DẪN DEPLOY — Expense Tracker
+# 🌐 HƯỚNG DẪN DEPLOY — Expense Tracker (Spring Boot)
+
+Hướng dẫn deploy **miễn phí** 3 thành phần: Frontend (Vercel) + Backend (Render) + Database (Neon).
 
 ## Sơ đồ kiến trúc deploy
 
 ```
         ┌─────────────────────┐
         │  Vercel (Frontend)  │  React SPA
-        │  expense-tracker.  │
-        │  vercel.app         │
+        │  expense-tracker-   │
+        │  <tên>.vercel.app   │
         └──────────┬──────────┘
                    │ HTTPS
                    │ VITE_API_URL = https://<api>.onrender.com/api
         ┌──────────▼──────────┐
-        │  Render (Backend)   │  NestJS + TypeORM
-        │  expense-tracker-   │
+        │  Render (Backend)   │  Spring Boot (Java 21)
+        │  expense-tracker-   │  jar: target/*.jar
         │  api.onrender.com   │
         └──────────┬──────────┘
-                   │ PostgreSQL connection string
+                   │ PostgreSQL connection string (sslmode=require)
         ┌──────────▼──────────┐
         │  Neon (Database)    │  PostgreSQL 16
         │  ep-xxx.aws.neon.   │
@@ -29,23 +31,25 @@
 
 ```bash
 cd "/d/Thạc sỹ/Công nghệ Web và Dịch vụ trực tuyến/bai-tap-cuoi-ky"
-# (đã git init + commit sẵn)
-git remote add origin https://github.com/<username>/expense-tracker.git
+git init   # nếu chưa có
+git add .
+git commit -m "Expense Tracker: React + Spring Boot + PostgreSQL"
 git branch -M main
+git remote add origin https://github.com/<username>/expense-tracker.git
 git push -u origin main
 ```
 
-> ⚠️ Kiểm tra `.env` KHÔNG bị đẩy lên (đã trong .gitignore). Chỉ có `.env.example`.
+> ⚠️ Kiểm tra `.env` KHÔNG bị đẩy lên (đã trong `.gitignore`). Chỉ có `.env.example`.
 
 ---
 
 ## BƯỚC 2: Database — Neon (free, không mất dữ liệu)
 
-1. Vào https://neon.tech → Sign up (GitHub/Google) → Create project
-2. Region: gần VN nhất (Singapore)
+1. Vào https://neon.tech → Sign up (GitHub/Google) → **Create project**
+2. Region: gần VN nhất (**Singapore**)
 3. Copy **connection string** dạng:
    ```
-   postgresql://neondb_owner:xxxx@ep-xxx-xxxx.aws.neon.tech/neondb?sslmode=require
+   postgresql://neondb_owner:***@ep-xxx-xxxx.aws.neon.tech/neondb?sslmode=require
    ```
 4. Lưu lại — dán vào Render ở bước sau
 
@@ -54,22 +58,31 @@ git push -u origin main
 ## BƯỚC 3: Backend — Render (free tier)
 
 1. https://render.com → Sign up → **New** → **Web Service**
-2. Connect GitHub repo → chọn thư mục `expense-tracker-backend`
+2. Connect GitHub repo → chọn repo
    (Nếu repo gồm cả FE+BE, dùng **Root Directory**: `expense-tracker-backend`)
 3. Cấu hình:
+
    | Field | Giá trị |
    |-------|--------|
-   | Build Command | `npm install && npm run build` |
-   | Start Command | `node dist/main.js` |
+   | Runtime | Java |
+   | Build Command | `./mvnw package -DskipTests` |
+   | Start Command | `java -jar target/expense-tracker-backend-0.0.1-SNAPSHOT.jar` |
    | Instance Type | Free |
+
 4. **Environment Variables** (Environment tab):
+
    ```
    DATABASE_URL = <connection string Neon ở bước 2>
+   DB_USERNAME  = <user Neon, vd: neondb_owner>
+   DB_PASSWORD  = <password Neon>
    JWT_SECRET   = <chuỗi dài ngẫu nhiên, vd: xK9!pQ2#mZ7@vR4$tW8^yB5&nC3*eF6>
-   CORS_ORIGIN  = http://localhost:5173  (tạm; sẽ đổi thành domain Vercel ở bước 5)
-   NODE_ENV     = production
+   CORS_ORIGIN  = http://localhost:5173  (tạm; đổi thành domain Vercel ở bước 5)
+   PORT         = 8080
    ```
-5. Deploy → chờ ~2-5 phút → copy URL (vd: `https://expense-tracker-api.onrender.com`)
+
+   > 💡 Nếu dùng Render Postgres (trả phí) thay Neon, có thể bỏ `DB_USERNAME`/`DB_PASSWORD` — nhưng Neon free là đủ.
+
+5. Deploy → chờ ~3-6 phút → copy URL (vd: `https://expense-tracker-api.onrender.com`)
 6. **Kiểm tra:** mở `https://expense-tracker-api.onrender.com/api/auth/login` (sẽ trả 400/405 — nghĩa là API sống)
 
 ---
@@ -79,10 +92,12 @@ git push -u origin main
 1. https://vercel.com → Sign up → **Add New** → **Project**
 2. Import GitHub repo → chọn thư mục `expense-tracker-frontend`
 3. Framework Preset: **Vite** (Vercel tự nhận diện)
-4. Environment Variables:
+4. **Environment Variables:**
+
    ```
    VITE_API_URL = https://expense-tracker-api.onrender.com/api
    ```
+
 5. Deploy → copy domain (vd: `https://expense-tracker.vercel.app`)
 
 ---
@@ -129,11 +144,13 @@ Mở `https://expense-tracker.vercel.app` và test ĐỦ các luồng:
 | Triệu chứng | Nguyên nhân | Cách sửa |
 |-------------|-------------|----------|
 | FE báo CORS error | CORS_ORIGIN chưa đúng | Sửa CORS_ORIGIN trên Render = đúng domain Vercel |
-| Login trả 500 | DATABASE_URL sai | Kiểm tra lại connection string Neon (có `?sslmode=require`) |
+| Login trả 500 | DATABASE_URL sai / thiếu DB_USERNAME, DB_PASSWORD | Kiểm tra lại connection string Neon (có `?sslmode=require`) |
 | FE tải nhưng trắng | VITE_API_URL thiếu `/api` | Sửa env trên Vercel → Redeploy |
 | Render build lỗi | Root Directory sai | Chỉ rõ `expense-tracker-backend` |
+| Render build lỗi Maven | Java version sai | Đảm bảo Runtime = Java 21 (pom yêu cầu) |
 | 404 khi vào /register | — | Vercel tự xử lý SPA fallback cho Vite; nếu lỗi thêm `vercel.json` với `{"rewrites": [{"source": "/(.*)", "destination": "/index.html"}]}` |
 | DB bị xóa khi restart | Dùng SQLite thay vì Postgres | Chuyển sang Neon (persistent) |
+| Backend chạy nhưng trỏ nhầm DB cũ | Thiếu env DATABASE_URL khi chạy jar | Set đủ `DATABASE_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `CORS_ORIGIN` |
 
 ---
 

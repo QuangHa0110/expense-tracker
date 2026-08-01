@@ -1,9 +1,12 @@
 import api from './client';
 
+export type TransactionType = 'income' | 'expense';
+
 export interface Expense {
   id: number;
   title: string;
   amount: string; // decimal trả về dạng string từ Postgres
+  type: TransactionType;
   category: string;
   date: string; // YYYY-MM-DD
   note: string | null;
@@ -23,6 +26,7 @@ export interface ExpenseListResponse {
 export interface ExpenseInput {
   title: string;
   amount: number;
+  type?: TransactionType;
   category: string;
   date: string;
   note?: string;
@@ -31,7 +35,8 @@ export interface ExpenseInput {
 
 export interface MonthlySummary {
   month: string; // YYYY-MM
-  total: number;
+  income: number;
+  expense: number;
 }
 
 export const EXPENSE_CATEGORIES = [
@@ -45,10 +50,20 @@ export const EXPENSE_CATEGORIES = [
   'other',
 ] as const;
 
+export const INCOME_CATEGORIES = [
+  'salary',
+  'bonus',
+  'interest',
+  'investment',
+  'gift',
+  'other_income',
+] as const;
+
 export const PAYMENT_METHODS = ['cash', 'card', 'bank_transfer'] as const;
 
 export const expenseApi = {
   list: (params?: {
+    type?: TransactionType;
     category?: string;
     month?: string;
     page?: number;
