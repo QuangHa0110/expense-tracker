@@ -55,7 +55,9 @@ git push -u origin main
 
 ---
 
-## BƯỚC 3: Backend — Render (free tier)
+## BƯỚC 3: Backend — Render (free tier, dùng Docker)
+
+> ⚠️ **Quan trọng:** Render **KHÔNG hỗ trợ native Java runtime** — chỉ hỗ trợ Node.js/Bun, Python, Ruby, Go, Rust, Elixir. Java/Kotlin/Scala phải deploy bằng **Docker image**. Repo đã có sẵn `Dockerfile` (multi-stage: build Maven → runtime JRE 21), Render sẽ tự build.
 
 1. https://render.com → Sign up → **New** → **Web Service**
 2. Connect GitHub repo → chọn repo
@@ -64,10 +66,12 @@ git push -u origin main
 
    | Field | Giá trị |
    |-------|--------|
-   | Runtime | Java |
-   | Build Command | `./mvnw package -DskipTests` |
-   | Start Command | `java -jar target/expense-tracker-backend-0.0.1-SNAPSHOT.jar` |
+   | Runtime | **Docker** |
+   | Root Directory | `expense-tracker-backend` |
+   | Dockerfile Path | `Dockerfile` (để trống nếu ở root của root directory) |
    | Instance Type | Free |
+
+   > Render nhận diện Dockerfile và tự build image — KHÔNG cần Build/Start Command.
 
 4. **Environment Variables** (Environment tab):
 
@@ -82,7 +86,7 @@ git push -u origin main
 
    > 💡 Nếu dùng Render Postgres (trả phí) thay Neon, có thể bỏ `DB_USERNAME`/`DB_PASSWORD` — nhưng Neon free là đủ.
 
-5. Deploy → chờ ~3-6 phút → copy URL (vd: `https://expense-tracker-api.onrender.com`)
+5. Deploy → chờ ~5-8 phút (build Docker lâu hơn native) → copy URL (vd: `https://expense-tracker-api.onrender.com`)
 6. **Kiểm tra:** mở `https://expense-tracker-api.onrender.com/api/auth/login` (sẽ trả 400/405 — nghĩa là API sống)
 
 ---
@@ -147,7 +151,8 @@ Mở `https://expense-tracker.vercel.app` và test ĐỦ các luồng:
 | Login trả 500 | DATABASE_URL sai / thiếu DB_USERNAME, DB_PASSWORD | Kiểm tra lại connection string Neon (có `?sslmode=require`) |
 | FE tải nhưng trắng | VITE_API_URL thiếu `/api` | Sửa env trên Vercel → Redeploy |
 | Render build lỗi | Root Directory sai | Chỉ rõ `expense-tracker-backend` |
-| Render build lỗi Maven | Java version sai | Đảm bảo Runtime = Java 21 (pom yêu cầu) |
+| Render build lỗi Maven | Java version sai | Đảm bảo Dockerfile dùng JDK 21 (pom yêu cầu) — Dockerfile đã set `maven:3.9.9-eclipse-temurin-21` |
+| Render không có Runtime Java | Chọn nhầm native runtime | Chọn Runtime = **Docker** (Render chỉ native-support Node/Python/Ruby/Go/Rust/Elixir) |
 | 404 khi vào /register | — | Vercel tự xử lý SPA fallback cho Vite; nếu lỗi thêm `vercel.json` với `{"rewrites": [{"source": "/(.*)", "destination": "/index.html"}]}` |
 | DB bị xóa khi restart | Dùng SQLite thay vì Postgres | Chuyển sang Neon (persistent) |
 | Backend chạy nhưng trỏ nhầm DB cũ | Thiếu env DATABASE_URL khi chạy jar | Set đủ `DATABASE_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `CORS_ORIGIN` |
