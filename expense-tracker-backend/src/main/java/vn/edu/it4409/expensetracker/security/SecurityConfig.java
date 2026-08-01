@@ -50,6 +50,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Health check công khai (UptimeRobot ping giữ service thức)
+                .requestMatchers(HttpMethod.GET, "/health").permitAll()
                 // Auth công khai (đăng ký / đăng nhập)
                 .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
                 // Mọi request khác cần JWT hợp lệ (đã verify ở filter)
